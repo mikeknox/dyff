@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/gonvenience/ytbx"
+	"gopkg.in/yaml.v3"
 )
 
 func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
@@ -12,8 +13,27 @@ func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
 		To:   r.To,
 	}
 
+	includeDiff := true
 	for _, diff := range r.Diffs {
-		if hasPath(diff.Path) {
+		if !hasPath(diff.Path) {
+			includeDiff = false
+		}
+		for _, diffDetail := range diff.Details {
+			for _, diffNode := range []*yaml.Node{diffDetail.From, diffDetail.To} {
+				if diffNode != nil {
+					subPaths, err := ytbx.ListPathsInNode(diffNode)
+					if err == nil {
+						for _, subPath := range subPaths {
+							testPath := ytbx.AppendPath(*diff.Path, subPath)
+							if !hasPath(&testPath) {
+								includeDiff = false
+							}
+						}
+					}
+				}
+			}
+		}
+		if includeDiff {
 			result.Diffs = append(result.Diffs, diff)
 		}
 	}
@@ -112,12 +132,12 @@ func (r Report) IgnoreValueChanges() (result Report) {
 				hasValChange = true
 				break
 			}
-  		}
+		}
 
 		if !hasValChange {
 			result.Diffs = append(result.Diffs, diff)
 		}
 	}
 
-	return result	
+	return result
 }

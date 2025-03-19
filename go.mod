@@ -2,6 +2,8 @@ module github.com/homeport/dyff
 
 go 1.23.0
 
+replace github.com/gonvenience/ytbx => github.com/mikeknox/ytbx v0.0.0-20250319084115-14cb4c641aeb
+
 require (
 	github.com/gonvenience/bunt v1.4.0
 	github.com/gonvenience/idem v0.0.1
