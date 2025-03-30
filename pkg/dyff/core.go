@@ -43,6 +43,7 @@ type compareSettings struct {
 	IgnoreWhitespaceChanges                  bool
 	KubernetesEntityDetection                bool
 	DetectRenames                            bool
+	FilterOnFullPath                         bool
 	AdditionalIdentifiers                    []string
 }
 
@@ -96,6 +97,13 @@ func DetectRenames(value bool) CompareOption {
 	}
 }
 
+// FilterOnFullPath enabled filtering on full path so that the trailing element is considered
+func FilterOnFullPath(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.FilterOnFullPath = value
+	}
+}
+
 // CompareInputFiles is one of the convenience main entry points for comparing
 // objects. In this case the representation of an input file, which might
 // contain multiple documents. It returns a report with the list of differences.
@@ -106,6 +114,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 			NonStandardIdentifierGuessCountThreshold: 3,
 			IgnoreOrderChanges:                       false,
 			KubernetesEntityDetection:                true,
+			FilterOnFullPath:                         false,
 		},
 	}
 
@@ -151,7 +160,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 			if err != nil {
 				return Report{}, fmt.Errorf("comparing Kubernetes resources: %w", err)
 			}
-			return Report{from, to, result}, nil
+			return Report{from, to, result, cmpr.settings.FilterOnFullPath}, nil
 		}
 	}
 
@@ -177,7 +186,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		result = append(result, diffs...)
 	}
 
-	return Report{from, to, result}, nil
+	return Report{from, to, result, cmpr.settings.FilterOnFullPath}, nil
 }
 
 func (compare *compare) objects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {

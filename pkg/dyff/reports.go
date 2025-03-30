@@ -9,24 +9,27 @@ import (
 
 func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
 	result = Report{
-		From: r.From,
-		To:   r.To,
+		From:             r.From,
+		To:               r.To,
+		FilterOnFullPath: r.FilterOnFullPath,
 	}
 
-	includeDiff := true
+	includeDiff := false
 	for _, diff := range r.Diffs {
-		if !hasPath(diff.Path) {
-			includeDiff = false
+		if hasPath(diff.Path) {
+			includeDiff = true
 		}
-		for _, diffDetail := range diff.Details {
-			for _, diffNode := range []*yaml.Node{diffDetail.From, diffDetail.To} {
-				if diffNode != nil {
-					subPaths, err := ytbx.ListPathsInNode(diffNode)
-					if err == nil {
-						for _, subPath := range subPaths {
-							testPath := ytbx.AppendPath(*diff.Path, subPath)
-							if !hasPath(&testPath) {
-								includeDiff = false
+		if r.FilterOnFullPath {
+			for _, diffDetail := range diff.Details {
+				for _, diffNode := range []*yaml.Node{diffDetail.From, diffDetail.To} {
+					if diffNode != nil {
+						subPaths, err := ytbx.ListPathsInNode(diffNode)
+						if err == nil {
+							for _, subPath := range subPaths {
+								testPath := ytbx.AppendPath(*diff.Path, subPath)
+								if hasPath(&testPath) {
+									includeDiff = true
+								}
 							}
 						}
 					}
@@ -36,6 +39,7 @@ func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
 		if includeDiff {
 			result.Diffs = append(result.Diffs, diff)
 		}
+		includeDiff = false
 	}
 
 	return result
@@ -121,8 +125,9 @@ func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
 
 func (r Report) IgnoreValueChanges() (result Report) {
 	result = Report{
-		From: r.From,
-		To:   r.To,
+		From:             r.From,
+		To:               r.To,
+		FilterOnFullPath: r.FilterOnFullPath,
 	}
 
 	for _, diff := range r.Diffs {

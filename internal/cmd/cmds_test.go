@@ -609,6 +609,26 @@ spec.replicas  (apps/v1/Deployment/test)
 				Expect(out).To(BeEquivalentTo(expected))
 			})
 		})
+		It("should not ignore changes in the trailing elements", func() {
+			out, err := dyff("between",
+				"--omit-header",
+				"--ignore-whitespace-changes",
+				"--filter-on-full-path",
+				assets("issues", "issue-exclude-element", "from.yml"),
+				assets("issues", "issue-exclude-element", "to.yml"))
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+(root level)
++ one map entry added:
+  newElement: added
+
+mapElement
+  + one map entry added:
+    newElement: added
+
+`))
+		})
 	})
 
 	Context("last-applied command", func() {
