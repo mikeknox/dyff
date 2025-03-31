@@ -196,8 +196,13 @@ func (compare *compare) objects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.No
 		}}, nil
 
 	case (from.Kind != to.Kind) || (from.Tag != to.Tag):
+		scalarPath := ytbx.AppendPath(path,
+			ytbx.Path{
+				PathElements: []ytbx.PathElement{{Name: getScalarNode(from, to)}},
+			},
+		)
 		return []Diff{{
-			&path,
+			&scalarPath,
 			[]Detail{{
 				Kind: MODIFICATION,
 				From: from,
@@ -207,6 +212,19 @@ func (compare *compare) objects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.No
 	}
 
 	return compare.nonNilSameKindNodes(path, from, to)
+}
+
+func getScalarNode(from *yamlv3.Node, to *yamlv3.Node) string {
+	switch {
+	case from == nil && to == nil:
+		return ""
+	case from.Tag == "!!str":
+		return from.Value
+	case to.Tag == "!!str":
+		return to.Value
+	}
+
+	return ""
 }
 
 func (compare *compare) nonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {

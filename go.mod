@@ -4,6 +4,8 @@ go 1.23.0
 
 toolchain go1.24.1
 
+replace github.com/gonvenience/ytbx => github.com/mikeknox/ytbx v0.0.0-20250329235034-0176989009e2
+
 require (
 	github.com/gonvenience/bunt v1.4.1
 	github.com/gonvenience/idem v0.0.2
