@@ -14,10 +14,9 @@ func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
 		FilterOnFullPath: r.FilterOnFullPath,
 	}
 
-	includeDiff := false
 	for _, diff := range r.Diffs {
 		if hasPath(diff.Path) {
-			includeDiff = true
+			result.Diffs = append(result.Diffs, diff)
 		}
 		if r.FilterOnFullPath {
 			for _, diffDetail := range diff.Details {
@@ -28,7 +27,9 @@ func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
 							for _, subPath := range subPaths {
 								testPath := ytbx.AppendPath(*diff.Path, subPath)
 								if hasPath(&testPath) {
-									includeDiff = true
+									matchedDiff := diff
+									matchedDiff.Path = &testPath
+									result.Diffs = append(result.Diffs, matchedDiff)
 								}
 							}
 						}
@@ -36,10 +37,6 @@ func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
 				}
 			}
 		}
-		if includeDiff {
-			result.Diffs = append(result.Diffs, diff)
-		}
-		includeDiff = false
 	}
 
 	return result
